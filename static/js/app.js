@@ -1,11 +1,11 @@
 // Initialize Firebase
-var config = {
-    apiKey: "AIzaSyBki3mFlSayHyQeql5-SEa7gXNg3nvVNsQ",
-    authDomain: "murder-438bd.firebaseapp.com",
-    databaseURL: "https://murder-438bd.firebaseio.com",
-    projectId: "murder-438bd",
-    storageBucket: "murder-438bd.appspot.com",
-    messagingSenderId: "558094635149"
+ var config = {
+    apiKey: "AIzaSyCDZyk63nSUkkt9Z6m7SSqOsgzZXvjTs3M",
+    authDomain: "lava-tag.firebaseapp.com",
+    databaseURL: "https://lava-tag.firebaseio.com",
+    projectId: "lava-tag",
+    storageBucket: "",
+    messagingSenderId: "852530320107"
 };
 
 firebase.initializeApp(config);
@@ -13,75 +13,11 @@ var database = firebase.database();
 var canvas = document.getElementById("Canvas");
 var context = canvas.getContext("2d");
 var playerID = "";
-const shootSpeed = 10;
+const START_SPEED = 5;
 
 canvas.height = window.innerHeight;
 canvas.width = window.innerWidth;
 
-class Bullet {
-	constructor(x, y, dir, id) {
-		this.x = x;
-		this.y = y;
-		this.direction = dir;
-		this.firedFrom = id;
-	}
-
-	move() {
-		var temp = this;
-		var intervalID = window.setInterval(function() {
-			var counter = 0;
-			temp.x += shootSpeed * Math.cos(temp.direction);
-			temp.y += shootSpeed * Math.sin(temp.direction);
-			database.ref("people/").once("value", function(snapshot) {
-				database.ref("bullets/").once("value", function(bulletSnapshot) {
-					let bulletArr = bulletSnapshot.val();
-					
-					if (bulletArr === null) {
-						bulletArr = [];
-					}
-					for (var n of bulletArr) {
-						console.log(n);
-						console.log(temp);
-						console.log(n.firedFrom);
-						console.log(temp.firedFrom);
-						if (n.firedFrom === temp.firedFrom) {
-							var indexOfBullet = bulletArr.indexOf(n);
-						}
-					}
-					database.ref("bullets/" + indexOfBullet + "/x").set(temp.x);
-					database.ref("bullets/" + indexOfBullet + "/y").set(temp.y);
-					for (var i in snapshot.val()) {
-						console.log(snapshot.val()[i].x);
-						console.log(temp);
-						console.log(temp.x);
-						if ((temp.x > snapshot.val()[i].x && temp.x < snapshot.val()[i].x + 50 && temp.y > snapshot.val()[i].y && temp.y < snapshot.val()[i].y + 50 && snapshot.val()[i].name != temp.firedFrom)) {
-							console.log("debugging");
-							bulletArr.splice(indexOfBullet, 1);
-							context.clearRect(temp.x, temp.y, 10, 10);
-							database.ref("bullets/").set(bulletArr);
-							console.log("super duper debugging");
-							window.clearInterval(intervalID);
-							break;
-						}
-						if (temp.x > canvas.width || temp.x < 0 || temp.y > canvas.height || temp.y < 0) {
-							console.log("off the screen");
-							bulletArr.splice(indexOfBullet, 1);
-							context.clearRect(temp.x, temp.y, 10, 10);
-							database.ref("bullets/").set(bulletArr);
-							window.clearInterval(intervalID);
-							break;
-						}
-					}
-				});
-			});
-			if (++counter === 50) {
-				console.log("debugging");
-				database.ref("bullets/" + indexOfBullet).remove();
-				window.clearInterval(intervalID);
-			}
-		}, 100);
-	}
-}
 
 class Bystander {
 	constructor(playerColor, playerName, initx, inity, startWithWeapon) {
@@ -139,7 +75,9 @@ var colors = ["green", "blue", "red", "yellow", "brown", "pink", "purple"];
 var keys = { 
 	length: 0 
 }
-const playerMovement = 10;
+var sprinting = false;
+var stepsMoved = 0;
+
 var names = {
 	"Alpha": true,
 	"Bravo": true,
@@ -244,72 +182,146 @@ document.onkeydown = function(event) {
 	}
 
 	if (keys[87] && keys.length == 1) { // w keycode
-		database.ref("people/" + playerID + "/y").once("value").then(function(snapshot) {
-			database.ref("people/" + playerID + "/y").set(snapshot.val() - playerMovement);
-			database.ref("people/" + playerID + "/direction").set(90);
-		});
+		
+		if (!sprinting) {
+			database.ref("people/" + playerID + "/y").once("value").then(function(snapshot) {
+				database.ref("people/" + playerID + "/y").set(snapshot.val() - START_SPEED);
+				database.ref("people/" + playerID + "/direction").set(90);
+			});
+		} else {
+			database.ref("people/" + playerID + "/y").once("value").then(function(snapshot) {
+				database.ref("people/" + playerID + "/y").set(snapshot.val() - START_SPEED);
+				database.ref("people/" + playerID + "/direction").set(90);
+			});
+		}
 	}
 	if (keys[65] && keys.length == 1) { // a keycode
-	 	database.ref("people/" + playerID + "/x").once("value").then(function(snapshot) {
-	 		database.ref("people/" + playerID + "/x").set(snapshot.val() - playerMovement);
-	 		database.ref("people/" + playerID + "/direction").set(180);
-	 	});
+	 	
+		if (!sprinting) {
+			database.ref("people/" + playerID + "/x").once("value").then(function(snapshot) {
+				database.ref("people/" + playerID + "/x").set(snapshot.val() - START_SPEED);
+				database.ref("people/" + playerID + "/direction").set(180);
+			});
+		} else {
+			database.ref("people/" + playerID + "/x").once("value").then(function(snapshot) {
+				database.ref("people/" + playerID + "/x").set(snapshot.val() - START_SPEED);
+				database.ref("people/" + playerID + "/direction").set(180);
+			});
+		}
 	}
 	if (keys[83] && keys.length == 1) { // s keycode
-		database.ref("people/" + playerID + "/y").once("value").then(function(snapshot) {
-			database.ref("people/" + playerID + "/y").set(snapshot.val() + playerMovement);
-			database.ref("people/" + playerID + "/direction").set(270); 
-		});
+		if (!sprinting) {
+			database.ref("people/" + playerID + "/y").once("value").then(function(snapshot) {
+				database.ref("people/" + playerID + "/y").set(snapshot.val() + START_SPEED);
+				database.ref("people/" + playerID + "/direction").set(270); 
+			});
+		} else {
+			database.ref("people/" + playerID + "/y").once("value").then(function(snapshot) {
+				database.ref("people/" + playerID + "/y").set(snapshot.val() + START_SPEED);
+				database.ref("people/" + playerID + "/direction").set(270); 
+			});
+		}
+		
 	}
 	if (keys[68] && keys.length == 1) { // d keycode
-		database.ref("people/" + playerID + "/x").once("value").then(function(snapshot) {
-			database.ref("people/" + playerID + "/x").set(snapshot.val() + playerMovement);
-			database.ref("people/" + playerID + "/direction").set(0);
-		});
+		if (!sprinting) {
+			database.ref("people/" + playerID + "/x").once("value").then(function(snapshot) {
+				database.ref("people/" + playerID + "/x").set(snapshot.val() + START_SPEED);
+				database.ref("people/" + playerID + "/direction").set(0);
+			});
+		} else {
+			database.ref("people/" + playerID + "/x").once("value").then(function(snapshot) {
+				database.ref("people/" + playerID + "/x").set(snapshot.val() + START_SPEED);
+				database.ref("people/" + playerID + "/direction").set(0);
+			});
+		}
 	}
 
 	if (keys[87] && keys[68] && keys.length == 2) { // w + d
-		database.ref("people/" + playerID).once("value").then(function(snapshot) {
-			database.ref("people/" + playerID + "/x").set(snapshot.val().x + playerMovement);
-			database.ref("people/" + playerID + "/y").set(snapshot.val().y - playerMovement);
-			database.ref("people/" + playerID + "/direction").set(45);
-		});
+		if (!sprinting) {
+			database.ref("people/" + playerID).once("value").then(function(snapshot) {
+				database.ref("people/" + playerID + "/x").set(snapshot.val().x + (Math.sqrt(2)/2)*START_SPEED);
+				database.ref("people/" + playerID + "/y").set(snapshot.val().y - (Math.sqrt(2)/2)*START_SPEED);
+				database.ref("people/" + playerID + "/direction").set(45);
+			});
+		} else {
+			database.ref("people/" + playerID).once("value").then(function(snapshot) {
+				database.ref("people/" + playerID + "/x").set(snapshot.val().x + (Math.sqrt(2))*START_SPEED);
+				database.ref("people/" + playerID + "/y").set(snapshot.val().y - (Math.sqrt(2))*START_SPEED);
+				database.ref("people/" + playerID + "/direction").set(45);
+			});
+		}
 	}
 
 	if (keys[87] && keys[65] && keys.length == 2) { // w + a
-		database.ref("people/" + playerID).once("value").then(function(snapshot) {
-			database.ref("people/" + playerID + "/x").set(snapshot.val().x - playerMovement);
-			database.ref("people/" + playerID + "/y").set(snapshot.val().y - playerMovement);
-			database.ref("people/" + playerID + "/direction").set(135);
-		});
+		if (!sprinting) {
+			database.ref("people/" + playerID).once("value").then(function(snapshot) {
+				database.ref("people/" + playerID + "/x").set(snapshot.val().x - (Math.sqrt(2)/2)*START_SPEED);
+				database.ref("people/" + playerID + "/y").set(snapshot.val().y - (Math.sqrt(2)/2)*START_SPEED);
+				database.ref("people/" + playerID + "/direction").set(135);
+			});
+		} else {
+			database.ref("people/" + playerID).once("value").then(function(snapshot) {
+				database.ref("people/" + playerID + "/x").set(snapshot.val().x - (Math.sqrt(2))*START_SPEED);
+				database.ref("people/" + playerID + "/y").set(snapshot.val().y - (Math.sqrt(2))*START_SPEED);
+				database.ref("people/" + playerID + "/direction").set(135);
+			});
+		}
 	}
 
 	if (keys[83] && keys[68] && keys.length == 2) { // s + d
-		database.ref("people/" + playerID).once("value").then(function(snapshot) {
-			database.ref("people/" + playerID + "/x").set(snapshot.val().x + playerMovement);
-			database.ref("people/" + playerID + "/y").set(snapshot.val().y + playerMovement);
-			database.ref("people/" + playerID + "/direction").set(315);
-		});
+		if (!sprinting) {
+			database.ref("people/" + playerID).once("value").then(function(snapshot) {
+				database.ref("people/" + playerID + "/x").set(snapshot.val().x + (Math.sqrt(2)/2)*START_SPEED);
+				database.ref("people/" + playerID + "/y").set(snapshot.val().y + (Math.sqrt(2)/2)*START_SPEED);
+				database.ref("people/" + playerID + "/direction").set(315);
+			});
+		} else {
+			database.ref("people/" + playerID).once("value").then(function(snapshot) {
+				database.ref("people/" + playerID + "/x").set(snapshot.val().x + (Math.sqrt(2))*START_SPEED);
+				database.ref("people/" + playerID + "/y").set(snapshot.val().y + (Math.sqrt(2))*START_SPEED);
+				database.ref("people/" + playerID + "/direction").set(315);
+			});
+		}
+
 	}
 
 	if (keys[83] && keys[65] && keys.length == 2) { // s + a
-		database.ref("people/" + playerID).once("value").then(function(snapshot) {
-			database.ref("people/" + playerID + "/x").set(snapshot.val().x - playerMovement);
-			database.ref("people/" + playerID + "/y").set(snapshot.val().y + playerMovement);
-			database.ref("people/" + playerID + "/direction").set(225);
-		});
+		
+		if (!sprinting) {
+			database.ref("people/" + playerID).once("value").then(function(snapshot) {
+				database.ref("people/" + playerID + "/x").set(snapshot.val().x - (Math.sqrt(2)/2)*START_SPEED);
+				database.ref("people/" + playerID + "/y").set(snapshot.val().y + (Math.sqrt(2)/2)*START_SPEED);
+				database.ref("people/" + playerID + "/direction").set(225);
+			});
+		} else {
+			database.ref("people/" + playerID).once("value").then(function(snapshot) {
+				database.ref("people/" + playerID + "/x").set(snapshot.val().x - (Math.sqrt(2)*START_SPEED));
+				database.ref("people/" + playerID + "/y").set(snapshot.val().y + (Math.sqrt(2)*START_SPEED));
+				database.ref("people/" + playerID + "/direction").set(225);
+			});
+		}
 	}
+	
+	stepsMoved++;
+	
+	if (!sprinting) {
+		if (stepsMoved >= 100) {
+			sprinting = true;
+		}
+	} else {
+		console.log("sprinting");
+	}
+	
 }
-
-var countdownFire = window.setInterval(function() {
-	timeUntilFire--;
-}, 1000);
 
 document.onkeyup = function(event) {
 	if (keys[event.keyCode]) {
 		keys[event.keyCode] = false;
 		keys.length--;
 	}
+	sprinting = false;
+	stepsMoved = 0;
 }
 
 database.ref("names/").on("value", function(snapshot) {
@@ -326,47 +338,11 @@ database.ref("names/").on("value", function(snapshot) {
 database.ref("people/").on("value", function(snapshot) {
 	context.fillStyle = "white";
 	for (var n in snapshot.val()) {
-		context.clearRect(snapshot.val()[n].x - playerMovement, snapshot.val()[n].y - playerMovement, 50 + (playerMovement*2), 50 + (playerMovement*2));
+		context.clearRect(snapshot.val()[n].x - START_SPEED - (Math.sqrt(2)/2), snapshot.val()[n].y - START_SPEED - (Math.sqrt(2)/2), 50 + (START_SPEED*2) + Math.sqrt(2), 50 + (START_SPEED*2) + Math.sqrt(2));
 		context.fillStyle = snapshot.val()[n].color;
 		context.fillRect(snapshot.val()[n].x, snapshot.val()[n].y, 50, 50);
 	}
 
-});
-
-database.ref("bullets/").on("value", function(snapshot) {
-	for (var i in snapshot.val()) {
-		context.clearRect(snapshot.val()[i].x - shootSpeed, snapshot.val()[i].y - shootSpeed, 50 + (shootSpeed*2), 50 + (shootSpeed*2));
-		context.fillStyle = "black";
-		context.fillRect(snapshot.val()[i].x, snapshot.val()[i].y, 10, 10);
-	}
-})
-
-window.addEventListener("click", function(m) {
-	if (timeUntilFire <= 0) {
-		timeUntilFire = 2;
-		console.log("secondTesting");
-		console.log(player);
-		if (player.hasWeapon) {
-			database.ref("bullets/").once("value", function(snapshot) {
-				database.ref("people/").once("value", function(players) {
-					let bulletsArr = snapshot.val();
-					if (bulletsArr === null) {
-						bulletsArr = [];
-					}
-					
-					bulletsArr.push(new Bullet(players.val()[playerID].x + 25, players.val()[playerID].y + 25, players.val()[playerID].direction, playerID));
-					database.ref("bullets/").set(bulletsArr);
-					bulletsArr[bulletsArr.length - 1].move();
-				
-				});
-			});
-		} else if (player.hasKnife) {
-			
-		} else {
-			
-		}
-		
-	}
 });
 
 window.addEventListener("beforeunload", function(e) {
