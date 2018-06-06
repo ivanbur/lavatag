@@ -13,10 +13,12 @@ var database = firebase.database();
 var canvas = document.getElementById("Canvas");
 var context = canvas.getContext("2d");
 var playerID = "";
+var collided = false;
+var canTag = false;
 const START_SPEED = 5;
 
-canvas.height = window.innerHeight;
-canvas.width = window.innerWidth;
+canvas.height = 920;
+canvas.width = 1920;
 
 
 class Bystander {
@@ -25,15 +27,8 @@ class Bystander {
 		this.name = playerName;
 		this.x = initx;
 		this.y = inity;
-		this.hasWeapon = startWithWeapon;
+		this.it = false;
 		this.direction = 90;
-	}
-	
-	
-	shoot()  {
-		if (this.hasWeapon) {
-			
-		}
 	}
 }
 
@@ -46,32 +41,10 @@ class Murderer {
 		this.direction = 90;
 		this.hasKnife = true;
 	}
-	
-	setDirection(newDir) {
-		this.direction = newDir;
-	}
-	
-	// move() /*we need different directions for moving and for facing but right now lets focus on one*/{
-	// 	if (this.direction === "up") {
-	// 		this.y -= 10;
-	// 	} else if (this.direction === "left") {
-	// 		this.x -= 10;
-	// 	} else if (this.direction === "down") {
-	// 		this.y += 10;
-	// 	} else if (this.direction === "right") {
-	// 		this.x += 10;
-	// 	}
-	// }
-	stab() {
-		database.ref("people/").once("value", function(snapshot) {
-
-		});
-	}
 }
 
 var player;
 var timeUntilFire = 2;
-var colors = ["green", "blue", "red", "yellow", "brown", "pink", "purple"];
 var keys = { 
 	length: 0 
 }
@@ -141,12 +114,14 @@ function playGame() {
 		}
 		if (playersOnline == 3) {
 			player = new Murderer("default", "default", 50, 50);
+			player.color = "red";
 		} else if (playersOnline == 1) {
 			player = new Bystander("default", "default", 50, 50, true);
+			player.color = "green";
 		} else {
 			player = new Bystander("default", "default", 50, 50, false);
+			player.color = "green";
 		}
-		player.color = colors[Math.round(Math.random() * colors.length)];
 		var property = pickRandomProperty(snapshot.val());
 		console.log("#1 - " + snapshot.val()[property]);
 		while (!snapshot.val()[property]) {
@@ -157,6 +132,7 @@ function playGame() {
 		console.log("should be playerid - " + property);
 		playerID = property;
 		player.name = playerID;
+		
 		let obj = snapshot.val();
 		console.log(obj);
 		console.log(snapshot.val());
@@ -182,137 +158,128 @@ document.onkeydown = function(event) {
 	}
 
 	if (keys[87] && keys.length == 1) { // w keycode
+		database.ref("people/" + playerID + "/y").once("value").then(function(snapshot) {
+			//database.ref("people/" + playerID + "/y").set(snapshot.val() - (START_SPEED*Math.pow(1.02, stepsMoved)));
+			database.ref("people/" + playerID + "/direction").set(90);
+			if (snapshot.val() + 60 - (START_SPEED*Math.pow(1.02, stepsMoved)) < canvas.height && snapshot.val() - (START_SPEED*Math.pow(1.02, stepsMoved)) > 0) {
+				//database.ref("people/" + playerID + "/y").set(snapshot.val() + 1.5*(START_SPEED*Math.pow(1.02, stepsMoved)));
+				database.ref("people/" + playerID + "/y").set(snapshot.val() - (START_SPEED*Math.pow(1.02, stepsMoved)));
+				//stepsMoved = 0;
+			} else {
+				stepsMoved = 0;
+			}
+		});
 		
-		if (!sprinting) {
-			database.ref("people/" + playerID + "/y").once("value").then(function(snapshot) {
-				database.ref("people/" + playerID + "/y").set(snapshot.val() - START_SPEED);
-				database.ref("people/" + playerID + "/direction").set(90);
-			});
-		} else {
-			database.ref("people/" + playerID + "/y").once("value").then(function(snapshot) {
-				database.ref("people/" + playerID + "/y").set(snapshot.val() - START_SPEED);
-				database.ref("people/" + playerID + "/direction").set(90);
-			});
-		}
 	}
 	if (keys[65] && keys.length == 1) { // a keycode
-	 	
-		if (!sprinting) {
-			database.ref("people/" + playerID + "/x").once("value").then(function(snapshot) {
-				database.ref("people/" + playerID + "/x").set(snapshot.val() - START_SPEED);
-				database.ref("people/" + playerID + "/direction").set(180);
-			});
-		} else {
-			database.ref("people/" + playerID + "/x").once("value").then(function(snapshot) {
-				database.ref("people/" + playerID + "/x").set(snapshot.val() - START_SPEED);
-				database.ref("people/" + playerID + "/direction").set(180);
-			});
-		}
+		database.ref("people/" + playerID + "/x").once("value").then(function(snapshot) {
+			//database.ref("people/" + playerID + "/x").set(snapshot.val() - (START_SPEED*Math.pow(1.02, stepsMoved)));
+			database.ref("people/" + playerID + "/direction").set(180);
+			if (snapshot.val() + 60 - (START_SPEED*Math.pow(1.02, stepsMoved)) < canvas.width && snapshot.val() - (START_SPEED*Math.pow(1.02, stepsMoved)) > 0) {
+				//database.ref("people/" + playerID + "/x").set(snapshot.val() + 1.5*(START_SPEED*Math.pow(1.02, stepsMoved)));
+				database.ref("people/" + playerID + "/x").set(snapshot.val() - (START_SPEED*Math.pow(1.02, stepsMoved)));
+				//stepsMoved = 0;
+			} else {
+				stepsMoved = 0;
+			}
+		});
 	}
 	if (keys[83] && keys.length == 1) { // s keycode
-		if (!sprinting) {
-			database.ref("people/" + playerID + "/y").once("value").then(function(snapshot) {
-				database.ref("people/" + playerID + "/y").set(snapshot.val() + START_SPEED);
-				database.ref("people/" + playerID + "/direction").set(270); 
-			});
-		} else {
-			database.ref("people/" + playerID + "/y").once("value").then(function(snapshot) {
-				database.ref("people/" + playerID + "/y").set(snapshot.val() + START_SPEED);
-				database.ref("people/" + playerID + "/direction").set(270); 
-			});
-		}
-		
+		database.ref("people/" + playerID + "/y").once("value").then(function(snapshot) {
+			//database.ref("people/" + playerID + "/y").set(snapshot.val() + (START_SPEED*Math.pow(1.02, stepsMoved)));
+			database.ref("people/" + playerID + "/direction").set(270); 
+			if (snapshot.val() + 60 + (START_SPEED*Math.pow(1.02, stepsMoved)) < canvas.height && snapshot.val() + (START_SPEED*Math.pow(1.02, stepsMoved)) > 0) {
+				//database.ref("people/" + playerID + "/y").set(snapshot.val().y - 1.5*(START_SPEED*Math.pow(1.02, stepsMoved)));
+				database.ref("people/" + playerID + "/y").set(snapshot.val() + (START_SPEED*Math.pow(1.02, stepsMoved)));
+				//stepsMoved = 0;
+			} else {
+				stepsMoved = 0;
+			}
+		});
 	}
 	if (keys[68] && keys.length == 1) { // d keycode
-		if (!sprinting) {
-			database.ref("people/" + playerID + "/x").once("value").then(function(snapshot) {
-				database.ref("people/" + playerID + "/x").set(snapshot.val() + START_SPEED);
-				database.ref("people/" + playerID + "/direction").set(0);
-			});
-		} else {
-			database.ref("people/" + playerID + "/x").once("value").then(function(snapshot) {
-				database.ref("people/" + playerID + "/x").set(snapshot.val() + START_SPEED);
-				database.ref("people/" + playerID + "/direction").set(0);
-			});
-		}
+		database.ref("people/" + playerID + "/x").once("value").then(function(snapshot) {
+			//database.ref("people/" + playerID + "/x").set(snapshot.val() + (START_SPEED*Math.pow(1.02, stepsMoved)));
+			database.ref("people/" + playerID + "/direction").set(0);
+			if (snapshot.val() + 60 + (START_SPEED*Math.pow(1.02, stepsMoved)) < canvas.width && snapshot.val() + (START_SPEED*Math.pow(1.02, stepsMoved)) > 0) {
+				//database.ref("people/" + playerID + "/x").set(snapshot.val() - 1.5*(START_SPEED*Math.pow(1.02, stepsMoved)));
+				database.ref("people/" + playerID + "/x").set(snapshot.val() + (START_SPEED*Math.pow(1.02, stepsMoved)));
+				//stepsMoved = 0;
+			} else {
+				stepsMoved = 0;
+			}
+		});
 	}
 
 	if (keys[87] && keys[68] && keys.length == 2) { // w + d
-		if (!sprinting) {
-			database.ref("people/" + playerID).once("value").then(function(snapshot) {
-				database.ref("people/" + playerID + "/x").set(snapshot.val().x + (Math.sqrt(2)/2)*START_SPEED);
-				database.ref("people/" + playerID + "/y").set(snapshot.val().y - (Math.sqrt(2)/2)*START_SPEED);
-				database.ref("people/" + playerID + "/direction").set(45);
-			});
-		} else {
-			database.ref("people/" + playerID).once("value").then(function(snapshot) {
-				database.ref("people/" + playerID + "/x").set(snapshot.val().x + (Math.sqrt(2))*START_SPEED);
-				database.ref("people/" + playerID + "/y").set(snapshot.val().y - (Math.sqrt(2))*START_SPEED);
-				database.ref("people/" + playerID + "/direction").set(45);
-			});
-		}
+		database.ref("people/" + playerID).once("value").then(function(snapshot) {
+			//database.ref("people/" + playerID + "/x").set(snapshot.val().x + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
+			//database.ref("people/" + playerID + "/y").set(snapshot.val().y - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
+			database.ref("people/" + playerID + "/direction").set(45);
+			if ((snapshot.val().x + 50 + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) < canvas.width && snapshot.val().x + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) > 0) && (snapshot.val().y + 50 - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) < canvas.height && snapshot.val().y - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) > 0)) {
+				//database.ref("people/" + playerID + "/x").set(snapshot.val().x - 1.5*(Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
+				//database.ref("people/" + playerID + "/y").set(snapshot.val().y + 1.5*(Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
+				database.ref("people/" + playerID + "/x").set(snapshot.val().x + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
+				database.ref("people/" + playerID + "/y").set(snapshot.val().y - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
+				//stepsMoved = 0;
+			} else {
+				stepsMoved = 0;
+			}
+		});
 	}
 
 	if (keys[87] && keys[65] && keys.length == 2) { // w + a
-		if (!sprinting) {
-			database.ref("people/" + playerID).once("value").then(function(snapshot) {
-				database.ref("people/" + playerID + "/x").set(snapshot.val().x - (Math.sqrt(2)/2)*START_SPEED);
-				database.ref("people/" + playerID + "/y").set(snapshot.val().y - (Math.sqrt(2)/2)*START_SPEED);
-				database.ref("people/" + playerID + "/direction").set(135);
-			});
-		} else {
-			database.ref("people/" + playerID).once("value").then(function(snapshot) {
-				database.ref("people/" + playerID + "/x").set(snapshot.val().x - (Math.sqrt(2))*START_SPEED);
-				database.ref("people/" + playerID + "/y").set(snapshot.val().y - (Math.sqrt(2))*START_SPEED);
-				database.ref("people/" + playerID + "/direction").set(135);
-			});
-		}
+		database.ref("people/" + playerID).once("value").then(function(snapshot) {
+			//database.ref("people/" + playerID + "/x").set(snapshot.val().x - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
+			//database.ref("people/" + playerID + "/y").set(snapshot.val().y - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
+			database.ref("people/" + playerID + "/direction").set(135);
+			if ((snapshot.val().x +50 - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) < canvas.width && snapshot.val().x - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) > 0) && (snapshot.val().y + 50 - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) < canvas.height && snapshot.val().y - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) > 0)) {
+				//database.ref("people/" + playerID + "/x").set(snapshot.val().x + 1.5*(Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
+				//database.ref("people/" + playerID + "/y").set(snapshot.val().y + 1.5*(Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
+				database.ref("people/" + playerID + "/x").set(snapshot.val().x - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
+				database.ref("people/" + playerID + "/y").set(snapshot.val().y - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
+				//stepsMoved = 0;
+			} else {
+				stepsMoved = 0;
+			}
+		});
 	}
 
 	if (keys[83] && keys[68] && keys.length == 2) { // s + d
-		if (!sprinting) {
-			database.ref("people/" + playerID).once("value").then(function(snapshot) {
-				database.ref("people/" + playerID + "/x").set(snapshot.val().x + (Math.sqrt(2)/2)*START_SPEED);
-				database.ref("people/" + playerID + "/y").set(snapshot.val().y + (Math.sqrt(2)/2)*START_SPEED);
-				database.ref("people/" + playerID + "/direction").set(315);
-			});
-		} else {
-			database.ref("people/" + playerID).once("value").then(function(snapshot) {
-				database.ref("people/" + playerID + "/x").set(snapshot.val().x + (Math.sqrt(2))*START_SPEED);
-				database.ref("people/" + playerID + "/y").set(snapshot.val().y + (Math.sqrt(2))*START_SPEED);
-				database.ref("people/" + playerID + "/direction").set(315);
-			});
-		}
-
+		database.ref("people/" + playerID).once("value").then(function(snapshot) {
+			//database.ref("people/" + playerID + "/x").set(snapshot.val().x + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
+			//database.ref("people/" + playerID + "/y").set(snapshot.val().y + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
+			database.ref("people/" + playerID + "/direction").set(315);
+			if ((snapshot.val().x +50 + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) < canvas.width && snapshot.val().x + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) > 0) && (snapshot.val().y + 50 + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) < canvas.height && snapshot.val().y + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) > 0)) {
+				//database.ref("people/" + playerID + "/x").set(snapshot.val().x - 1.5*(Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
+				//database.ref("people/" + playerID + "/y").set(snapshot.val().y - 1.5*(Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
+				database.ref("people/" + playerID + "/x").set(snapshot.val().x + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
+				database.ref("people/" + playerID + "/y").set(snapshot.val().y + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
+				//stepsMoved = 0;
+			} else {
+				stepsMoved = 0;
+			}
+		});
 	}
 
 	if (keys[83] && keys[65] && keys.length == 2) { // s + a
-		
-		if (!sprinting) {
-			database.ref("people/" + playerID).once("value").then(function(snapshot) {
-				database.ref("people/" + playerID + "/x").set(snapshot.val().x - (Math.sqrt(2)/2)*START_SPEED);
-				database.ref("people/" + playerID + "/y").set(snapshot.val().y + (Math.sqrt(2)/2)*START_SPEED);
-				database.ref("people/" + playerID + "/direction").set(225);
-			});
-		} else {
-			database.ref("people/" + playerID).once("value").then(function(snapshot) {
-				database.ref("people/" + playerID + "/x").set(snapshot.val().x - (Math.sqrt(2)*START_SPEED));
-				database.ref("people/" + playerID + "/y").set(snapshot.val().y + (Math.sqrt(2)*START_SPEED));
-				database.ref("people/" + playerID + "/direction").set(225);
-			});
-		}
+		database.ref("people/" + playerID).once("value").then(function(snapshot) {
+			//database.ref("people/" + playerID + "/x").set(snapshot.val().x - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
+			//database.ref("people/" + playerID + "/y").set(snapshot.val().y + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
+			database.ref("people/" + playerID + "/direction").set(225);
+			if ((snapshot.val().x +50 - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) < canvas.width && snapshot.val().x - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) > 0) && (snapshot.val().y + 50 + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) < canvas.height && snapshot.val().y + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) > 0)) {
+				//database.ref("people/" + playerID + "/x").set(snapshot.val().x + 1.5*(Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
+				//database.ref("people/" + playerID + "/y").set(snapshot.val().y - 1.5*(Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
+				database.ref("people/" + playerID + "/x").set(snapshot.val().x - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
+				database.ref("people/" + playerID + "/y").set(snapshot.val().y + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
+				//stepsMoved = 0;
+			} else {
+				stepsMoved = 0;
+			}
+		});
 	}
 	
 	stepsMoved++;
-	
-	if (!sprinting) {
-		if (stepsMoved >= 100) {
-			sprinting = true;
-		}
-	} else {
-		console.log("sprinting");
-	}
-	
 }
 
 document.onkeyup = function(event) {
@@ -320,7 +287,6 @@ document.onkeyup = function(event) {
 		keys[event.keyCode] = false;
 		keys.length--;
 	}
-	sprinting = false;
 	stepsMoved = 0;
 }
 
@@ -335,13 +301,41 @@ database.ref("names/").on("value", function(snapshot) {
 	});
 });
 
-database.ref("people/").on("value", function(snapshot) {
+database.ref("people/").on("value", function(snapshot) { // where collisions check + draws everything
+
 	context.fillStyle = "white";
+	context.clearRect(0, 0, canvas.width, canvas.height);
 	for (var n in snapshot.val()) {
-		context.clearRect(snapshot.val()[n].x - START_SPEED - (Math.sqrt(2)/2), snapshot.val()[n].y - START_SPEED - (Math.sqrt(2)/2), 50 + (START_SPEED*2) + Math.sqrt(2), 50 + (START_SPEED*2) + Math.sqrt(2));
 		context.fillStyle = snapshot.val()[n].color;
 		context.fillRect(snapshot.val()[n].x, snapshot.val()[n].y, 50, 50);
+		if (snapshot.val()[n].name == player.name) {
+			context.fillStyle = "yellow";
+			context.fillRect(snapshot.val()[n].x + 25, snapshot.val()[n].y + 25, 5, 5);
+		}		
+		console.log("Test");
+		for (var i in snapshot.val()) {
+			if ((Math.abs(snapshot.val()[n].x - snapshot.val()[i].x) <= 50) && (Math.abs(snapshot.val()[n].y - snapshot.val()[i].y) <= 50) && n !== i) {
+				collided = true;
+				if (snapshot.val()[n].it || snapshot.val()[i].it) {
+					if (!collided) {
+						snapshot.val()[n].it = !snapshot.val()[n].it;
+						snapshot.val()[i].it = !snapshot.val()[i].it;
+						canTag = true; 
+					}
+				}
+				
+			} else {
+				collided = false;
+			}
+			if (collided) {
+				console.log("Collided: " + collided + " - " + snapshot.val()[n].name + " & " + snapshot.val()[i].name);
+			} else {
+				console.log("Collided: " + collided);
+			}
+			
+		}
 	}
+	
 
 });
 
