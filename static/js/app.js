@@ -68,7 +68,7 @@ var names = {
 	"X-ray": true,
 	"Yankee": true,
 	"Zulu": true
-}
+};
 
 $(document).ready(function() {
 	//database.ref("people/0").set(player);
@@ -287,14 +287,8 @@ database.ref("people/").on("value", function(snapshot) { // where collisions che
 				if (everybodyTagged) {
 					context.fillStyle = "black";
 					context.font = "20px Times New Roman";
-					context.fillText("Game Over!", canvas.width / 2, canvas.height / 2);
-					setTimeout(function() {
-						database.ref("people/" + playerID).remove();
-						database.ref("names/" + playerID).set(true);
-						$("#Canvas").hide();
-						$("#theButton").show();
-						$("#header").show();
-					}, 5000);
+					context.fillText("Game Over! The taggers win!", canvas.width / 2, canvas.height / 2);
+					setTimeout(gameFinished, 5000);
 					
 				}
 			}
@@ -304,6 +298,15 @@ database.ref("people/").on("value", function(snapshot) { // where collisions che
 	
 
 });
+
+function gameFinished() {
+	database.ref("people/" + playerID).remove();
+	database.ref("names/" + playerID).set(true);
+	$("#Canvas").hide();
+	$("#theButton").show();
+	$("#header").show();
+	database.ref("timeLeft").set(300);
+}
 
 window.addEventListener("beforeunload", function(e) {
 	if (playerID != "") {
