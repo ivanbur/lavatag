@@ -21,25 +21,14 @@ canvas.height = 920;
 canvas.width = 1920;
 
 
-class Bystander {
-	constructor(playerColor, playerName, initx, inity, startWithWeapon) {
+class GenericPlayer {
+	constructor(playerColor, playerName, initx, inity, it) {
 		this.color = playerColor;
 		this.name = playerName;
 		this.x = initx;
 		this.y = inity;
-		this.it = false;
+		this.it = it;
 		this.direction = 90;
-	}
-}
-
-class Murderer {
-	constructor(initColor, initName, initX, initY) {
-		this.color = initColor;
-		this.name = initName;
-		this.x = initX;
-		this.y = initY;
-		this.direction = 90;
-		this.hasKnife = true;
 	}
 }
 
@@ -113,31 +102,19 @@ function playGame() {
 			}
 		}
 		if (playersOnline == 3) {
-			player = new Murderer("default", "default", 50, 50);
-			player.color = "red";
-		} else if (playersOnline == 1) {
-			player = new Bystander("default", "default", 50, 50, true);
-			player.color = "green";
+			player = new GenericPlayer("red", "default", 50, 50, true);
 		} else {
-			player = new Bystander("default", "default", 50, 50, false);
-			player.color = "green";
+			player = new GenericPlayer("green", "default", 50, 50, false);
 		}
 		var property = pickRandomProperty(snapshot.val());
-		console.log("#1 - " + snapshot.val()[property]);
 		while (!snapshot.val()[property]) {
-			console.log("#2 - " + snapshot.val()[property]);
 			property = pickRandomProperty(snapshot.val());
-			console.log("#3 - " + snapshot.val()[property]);
 		}
-		console.log("should be playerid - " + property);
 		playerID = property;
 		player.name = playerID;
 		
 		let obj = snapshot.val();
-		console.log(obj);
-		console.log(snapshot.val());
 		obj[playerID] = false;
-		console.log(obj);
 		database.ref("names/").set(obj);
 		try {
 			console.log("PLAYERID - " + playerID);
@@ -159,12 +136,9 @@ document.onkeydown = function(event) {
 
 	if (keys[87] && keys.length == 1) { // w keycode
 		database.ref("people/" + playerID + "/y").once("value").then(function(snapshot) {
-			//database.ref("people/" + playerID + "/y").set(snapshot.val() - (START_SPEED*Math.pow(1.02, stepsMoved)));
 			database.ref("people/" + playerID + "/direction").set(90);
 			if (snapshot.val() + 60 - (START_SPEED*Math.pow(1.02, stepsMoved)) < canvas.height && snapshot.val() - (START_SPEED*Math.pow(1.02, stepsMoved)) > 0) {
-				//database.ref("people/" + playerID + "/y").set(snapshot.val() + 1.5*(START_SPEED*Math.pow(1.02, stepsMoved)));
 				database.ref("people/" + playerID + "/y").set(snapshot.val() - (START_SPEED*Math.pow(1.02, stepsMoved)));
-				//stepsMoved = 0;
 			} else {
 				stepsMoved = 0;
 			}
@@ -173,12 +147,9 @@ document.onkeydown = function(event) {
 	}
 	if (keys[65] && keys.length == 1) { // a keycode
 		database.ref("people/" + playerID + "/x").once("value").then(function(snapshot) {
-			//database.ref("people/" + playerID + "/x").set(snapshot.val() - (START_SPEED*Math.pow(1.02, stepsMoved)));
 			database.ref("people/" + playerID + "/direction").set(180);
 			if (snapshot.val() + 60 - (START_SPEED*Math.pow(1.02, stepsMoved)) < canvas.width && snapshot.val() - (START_SPEED*Math.pow(1.02, stepsMoved)) > 0) {
-				//database.ref("people/" + playerID + "/x").set(snapshot.val() + 1.5*(START_SPEED*Math.pow(1.02, stepsMoved)));
 				database.ref("people/" + playerID + "/x").set(snapshot.val() - (START_SPEED*Math.pow(1.02, stepsMoved)));
-				//stepsMoved = 0;
 			} else {
 				stepsMoved = 0;
 			}
@@ -186,12 +157,9 @@ document.onkeydown = function(event) {
 	}
 	if (keys[83] && keys.length == 1) { // s keycode
 		database.ref("people/" + playerID + "/y").once("value").then(function(snapshot) {
-			//database.ref("people/" + playerID + "/y").set(snapshot.val() + (START_SPEED*Math.pow(1.02, stepsMoved)));
 			database.ref("people/" + playerID + "/direction").set(270); 
 			if (snapshot.val() + 60 + (START_SPEED*Math.pow(1.02, stepsMoved)) < canvas.height && snapshot.val() + (START_SPEED*Math.pow(1.02, stepsMoved)) > 0) {
-				//database.ref("people/" + playerID + "/y").set(snapshot.val().y - 1.5*(START_SPEED*Math.pow(1.02, stepsMoved)));
 				database.ref("people/" + playerID + "/y").set(snapshot.val() + (START_SPEED*Math.pow(1.02, stepsMoved)));
-				//stepsMoved = 0;
 			} else {
 				stepsMoved = 0;
 			}
@@ -199,12 +167,9 @@ document.onkeydown = function(event) {
 	}
 	if (keys[68] && keys.length == 1) { // d keycode
 		database.ref("people/" + playerID + "/x").once("value").then(function(snapshot) {
-			//database.ref("people/" + playerID + "/x").set(snapshot.val() + (START_SPEED*Math.pow(1.02, stepsMoved)));
 			database.ref("people/" + playerID + "/direction").set(0);
 			if (snapshot.val() + 60 + (START_SPEED*Math.pow(1.02, stepsMoved)) < canvas.width && snapshot.val() + (START_SPEED*Math.pow(1.02, stepsMoved)) > 0) {
-				//database.ref("people/" + playerID + "/x").set(snapshot.val() - 1.5*(START_SPEED*Math.pow(1.02, stepsMoved)));
 				database.ref("people/" + playerID + "/x").set(snapshot.val() + (START_SPEED*Math.pow(1.02, stepsMoved)));
-				//stepsMoved = 0;
 			} else {
 				stepsMoved = 0;
 			}
@@ -213,15 +178,10 @@ document.onkeydown = function(event) {
 
 	if (keys[87] && keys[68] && keys.length == 2) { // w + d
 		database.ref("people/" + playerID).once("value").then(function(snapshot) {
-			//database.ref("people/" + playerID + "/x").set(snapshot.val().x + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
-			//database.ref("people/" + playerID + "/y").set(snapshot.val().y - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
 			database.ref("people/" + playerID + "/direction").set(45);
 			if ((snapshot.val().x + 50 + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) < canvas.width && snapshot.val().x + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) > 0) && (snapshot.val().y + 50 - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) < canvas.height && snapshot.val().y - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) > 0)) {
-				//database.ref("people/" + playerID + "/x").set(snapshot.val().x - 1.5*(Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
-				//database.ref("people/" + playerID + "/y").set(snapshot.val().y + 1.5*(Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
 				database.ref("people/" + playerID + "/x").set(snapshot.val().x + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
 				database.ref("people/" + playerID + "/y").set(snapshot.val().y - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
-				//stepsMoved = 0;
 			} else {
 				stepsMoved = 0;
 			}
@@ -230,15 +190,10 @@ document.onkeydown = function(event) {
 
 	if (keys[87] && keys[65] && keys.length == 2) { // w + a
 		database.ref("people/" + playerID).once("value").then(function(snapshot) {
-			//database.ref("people/" + playerID + "/x").set(snapshot.val().x - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
-			//database.ref("people/" + playerID + "/y").set(snapshot.val().y - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
 			database.ref("people/" + playerID + "/direction").set(135);
 			if ((snapshot.val().x +50 - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) < canvas.width && snapshot.val().x - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) > 0) && (snapshot.val().y + 50 - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) < canvas.height && snapshot.val().y - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) > 0)) {
-				//database.ref("people/" + playerID + "/x").set(snapshot.val().x + 1.5*(Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
-				//database.ref("people/" + playerID + "/y").set(snapshot.val().y + 1.5*(Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
 				database.ref("people/" + playerID + "/x").set(snapshot.val().x - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
 				database.ref("people/" + playerID + "/y").set(snapshot.val().y - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
-				//stepsMoved = 0;
 			} else {
 				stepsMoved = 0;
 			}
@@ -247,15 +202,10 @@ document.onkeydown = function(event) {
 
 	if (keys[83] && keys[68] && keys.length == 2) { // s + d
 		database.ref("people/" + playerID).once("value").then(function(snapshot) {
-			//database.ref("people/" + playerID + "/x").set(snapshot.val().x + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
-			//database.ref("people/" + playerID + "/y").set(snapshot.val().y + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
 			database.ref("people/" + playerID + "/direction").set(315);
 			if ((snapshot.val().x +50 + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) < canvas.width && snapshot.val().x + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) > 0) && (snapshot.val().y + 50 + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) < canvas.height && snapshot.val().y + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) > 0)) {
-				//database.ref("people/" + playerID + "/x").set(snapshot.val().x - 1.5*(Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
-				//database.ref("people/" + playerID + "/y").set(snapshot.val().y - 1.5*(Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
 				database.ref("people/" + playerID + "/x").set(snapshot.val().x + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
 				database.ref("people/" + playerID + "/y").set(snapshot.val().y + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
-				//stepsMoved = 0;
 			} else {
 				stepsMoved = 0;
 			}
@@ -264,15 +214,10 @@ document.onkeydown = function(event) {
 
 	if (keys[83] && keys[65] && keys.length == 2) { // s + a
 		database.ref("people/" + playerID).once("value").then(function(snapshot) {
-			//database.ref("people/" + playerID + "/x").set(snapshot.val().x - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
-			//database.ref("people/" + playerID + "/y").set(snapshot.val().y + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
 			database.ref("people/" + playerID + "/direction").set(225);
 			if ((snapshot.val().x +50 - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) < canvas.width && snapshot.val().x - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) > 0) && (snapshot.val().y + 50 + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) < canvas.height && snapshot.val().y + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)) > 0)) {
-				//database.ref("people/" + playerID + "/x").set(snapshot.val().x + 1.5*(Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
-				//database.ref("people/" + playerID + "/y").set(snapshot.val().y - 1.5*(Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
 				database.ref("people/" + playerID + "/x").set(snapshot.val().x - (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
 				database.ref("people/" + playerID + "/y").set(snapshot.val().y + (Math.sqrt(2)/2)*(START_SPEED*Math.pow(1.02, stepsMoved)));
-				//stepsMoved = 0;
 			} else {
 				stepsMoved = 0;
 			}
@@ -308,11 +253,10 @@ database.ref("people/").on("value", function(snapshot) { // where collisions che
 	for (var n in snapshot.val()) {
 		context.fillStyle = snapshot.val()[n].color;
 		context.fillRect(snapshot.val()[n].x, snapshot.val()[n].y, 50, 50);
-		if (snapshot.val()[n].name == player.name) {
+		if (player != undefined && snapshot.val()[n].name == player.name) {
 			context.fillStyle = "yellow";
 			context.fillRect(snapshot.val()[n].x + 25, snapshot.val()[n].y + 25, 5, 5);
-		}		
-		console.log("Test");
+		}
 		for (var i in snapshot.val()) {
 			if ((Math.abs(snapshot.val()[n].x - snapshot.val()[i].x) <= 50) && (Math.abs(snapshot.val()[n].y - snapshot.val()[i].y) <= 50) && n !== i) {
 				collided = true;
@@ -327,10 +271,32 @@ database.ref("people/").on("value", function(snapshot) { // where collisions che
 			} else {
 				collided = false;
 			}
-			if (collided) {
+			if (collided && (snapshot.val()[n].it || snapshot.val()[i].it)) {
 				console.log("Collided: " + collided + " - " + snapshot.val()[n].name + " & " + snapshot.val()[i].name);
-			} else {
-				console.log("Collided: " + collided);
+				database.ref("people/" + snapshot.val()[n].name + "/it").set(true);
+				database.ref("people/" + snapshot.val()[n].name + "/color").set("red");
+				database.ref("people/" + snapshot.val()[i].name + "/it").set(true);
+				database.ref("people/" + snapshot.val()[i].name + "/color").set("red");
+				var everybodyTagged = true;
+				for (var x in snapshot.val()) {
+					if (!snapshot.val()[x].it) {
+						everybodyTagged = false;
+					}
+				}
+
+				if (everybodyTagged) {
+					context.fillStyle = "black";
+					context.font = "20px Times New Roman";
+					context.fillText("Game Over!", canvas.width / 2, canvas.height / 2);
+					setTimeout(function() {
+						database.ref("people/" + playerID).remove();
+						database.ref("names/" + playerID).set(true);
+						$("#Canvas").hide();
+						$("#theButton").show();
+						$("#header").show();
+					}, 5000);
+					
+				}
 			}
 			
 		}
