@@ -257,8 +257,8 @@ document.onkeyup = function(event) {
 }
 
 database.ref("names/").on("value", function(snapshot) {
-	// var img = document.getElementById(theBackground);
-	var img = document.getElementById("LavaImage");
+	var img = document.getElementById(theBackground);
+	// var img = document.getElementById("LavaImage");
 	context.drawImage(img, 0, 0);
 	database.ref("people/").once("value", function(snapshot) {
 		for (var i in snapshot.val()) {
@@ -274,8 +274,8 @@ database.ref("names/").on("value", function(snapshot) {
 });
 
 database.ref("people/").on("value", function(snapshot) { // where collisions check + draws everything
-	// var img = document.getElementById(theBackground);
-	var img = document.getElementById("LavaImage");
+	var img = document.getElementById(theBackground);
+	// var img = document.getElementById("LavaImage");
 	context.drawImage(img, 0, 0);
 	for (var n in snapshot.val()) {
 		//context.fillStyle = snapshot.val()[n].color;
