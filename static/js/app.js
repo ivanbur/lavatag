@@ -16,6 +16,7 @@ var playerID = "";
 var collided = false;
 var canTag = false;
 var startSpeed = 5;
+var theBackground = "LavaImage";
 
 canvas.height = 920;
 canvas.width = 1920;
@@ -79,6 +80,18 @@ $(document).ready(function() {
 	$("#Canvas").hide();
 });
 
+function changeBackground() {
+	if (document.getElementById("changeBackground").value == "Change Background to lava") {
+		theBackground = "altBack";
+		document.getElementById("changeBackground").value = "Change Background to minecraft";
+		document.getElementById("currentBackIs").innerHTML = "Current Background is: Lava";
+	} else {
+		theBackground = "LavaImage";
+		document.getElementById("changeBackground").value = "Change Background to lava";
+		document.getElementById("currentBackIs").innerHTML = "Current Background is: Minecraft";
+	}
+}
+
 function pickRandomProperty(obj) {
     var result;
     var count = 0;
@@ -91,6 +104,7 @@ function pickRandomProperty(obj) {
 function playGame() {
 	$("#header").hide();
 	$("#theButton").hide();
+	$("#changeBackground").hide();
 	$("#Canvas").show();
 	
 	database.ref("names/").once("value").then(function(snapshot) {
@@ -242,9 +256,8 @@ document.onkeyup = function(event) {
 }
 
 database.ref("names/").on("value", function(snapshot) {
-	var img = document.getElementById("LavaImage");
+	var img = document.getElementById(theBackground);
 	context.drawImage(img, 0, 0);
-	console.log("Debugging");
 	database.ref("people/").once("value", function(snapshot) {
 		for (var i in snapshot.val()) {
 			//context.fillStyle = snapshot.val()[i].color;
@@ -259,7 +272,7 @@ database.ref("names/").on("value", function(snapshot) {
 });
 
 database.ref("people/").on("value", function(snapshot) { // where collisions check + draws everything
-	var img = document.getElementById("LavaImage");
+	var img = document.getElementById(theBackground);
 	context.drawImage(img, 0, 0);
 	for (var n in snapshot.val()) {
 		//context.fillStyle = snapshot.val()[n].color;
@@ -328,6 +341,7 @@ function gameFinished() {
 	everybodyTagged = false;
 	$("#Canvas").hide();
 	$("#theButton").show();
+	$("#changeBackground").show();
 	$("#header").show();
 }
 
