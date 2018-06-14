@@ -106,6 +106,7 @@ function playGame() {
 	$("#theButton").hide();
 	$("#changeBackground").hide();
 	$("#currentBackIs").hide();
+	$("br").hide();
 	$("#Canvas").show();
 	
 	database.ref("names/").once("value").then(function(snapshot) {
@@ -345,6 +346,7 @@ function gameFinished() {
 	$("#Canvas").hide();
 	$("#theButton").show();
 	$("#changeBackground").show();
+	$("br").show();
 	$("#currentBackIs").show();
 	$("#header").show();
 }
